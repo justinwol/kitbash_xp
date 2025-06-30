@@ -1,0 +1,914 @@
+This is the OBJ8 File Format Specification, (c) 2005-2022 Laminar Research, All Rights Reserved.
+
+Revision History
+03/22/25    Added the ATTR_landing_gear directive
+12/09/24    Added missing ATTR_manip_device documentation
+07/08/24    Added X-Plane 12.1.0 directives
+11/09/22    Added X-Plane 12 TEXTURE_MAP info
+11/03/21    Added new X-Plane 12 attributes including rain and lighting
+01/11/21    Added note about plugin objects and ATTR_hard/_deck
+11/12/20    Clarified ATTR_cockpit_device and panel texture mode further
+11/05/20    ATTR_cockpit_lit_only added, panel details sections updated
+09/23/20    Clarification on LIGHT_SPILL_CUSTOM's dref parameter
+09/14/20    Deprecated smoke_white/black
+01/07/20    One more LOD rules clarified, formatting updated
+06/11/19    More details about ATTR_shadow and GLOBAL_no_shadow
+04/29/19    Added previously undocumented SCENERY_SHADOWS conditional and ATTR_shadow details
+02/04/19    Clarified SLOPE_LIMIT degree limits
+01/31/19    Clarified LOD rules
+01/29/19    Added MAGNET directive
+10/15/18    Added PARTICLE_SYSTEM and EMITTER directives, some formatting
+09/28/18    Fixed typos and adds that ANIM_rotate and ANIM_trans's dataref is optional
+02/22/18    Fixed typo in ATTR_manip_command_xxx manipulators
+11/17/17    Updated for X-Plane 1110
+07/12/17    Updated for X-Plane 1100
+10/16/16    Updated for X-Plane 1050
+07/31/12    Updated for X-Plane 1010
+03/14/12    Updated for X-Plane 1000
+12/03/09    Added normal maps and parameterized lights for 940
+06/16/09    Added new manipulators for 930b13
+04/28/09    ATTR_light_level edited
+04/06/09    Fixed Typos
+02/04/09    Updated for X-Plane 930
+09/25/08    Updated for X-Plane 920
+12/26/07    Updated for X-Plane 900
+04/05/07    Clarified use of custom lights
+07/12/06    Revised for X-Plane 850
+09/16/05    Initial Draft
+Change History
+The initial OBJ8 format was supported starting in X-Plane 816. X-Plane 850, 900, and 920 extended the format.
+
+Changes for 1220
+Added the ATTR_landing_gear directive for declaring gear properties for the 3D model.
+Changes for 1210
+Access to detailing extensions including decals (see Standard Shading Options documentation for more details
+Updated thermal directives
+New LOAD_CENTER directive (scenery)
+New manipulator (ATTR_manip_device) for plugin-created touch-screen cockpit devices
+Changes for 1200
+New ATTR_hud_glass/_reset directive
+New Rain and Thermal directives
+v12 GLOBAL_luminance and photometric directives
+CHANGES FOR 1130
+New PARTICLE EMITTER support, MAGNET point VR support
+CHANGES FOR 1110
+New VR-friendly manipulators: ATTR_manip_command_knob2, ATTR_manip_command_switch_left_right2, ATTR_manip_command_switch_up_down2, ATTR_manip_drag_rotate, and ATTR_axis_detent. Added MAGNET (but mistakenly forgotten to put into the spec until after the release of 11.30)
+ATTR_cockpit_lit_only added
+CHANGES FOR 1100
+NORMAL_METALNESS and BLEND_GLASS added
+ATTR_cockpit_device added
+CHANGES FOR 1050
+New manipulators and manipulator mouse wheel support.
+CHANGES FOR 1010
+ATTR_no_shadow and GLOBAL_no_shadow can be used to turn off shadowing on a per-batch or per-object basis.
+GLOBAL_cockpit_lit can be used to get translucency with the cockpit texture and correct lighting.
+ATTR_manip_drag_axis_pix provides non-linear pixel-space dragging.
+CHANGES FOR 1000
+X-Plane 10 introduces a number of major new features:
+
+Draped geometry.  An object can contain a second shader definition and geometry that is draped onto the scenery in the same coordinate reference system as the object itself.
+Global state.  Object draw state can be declared to be global to the entire object.  When this happens, the state is factored across the entire object.  For a scenery with a large number of objects with common state, this can improve performance greatly compared to traditional ATTRibutes.
+Extra meta-data.  The OBJ format has a number of meta-data items in the header that interact with the library.
+Custom spill: while spill lights are supported with the X-Plane 9 parameterized and named light scheme, it is also possible to build a fully customized spill light.
+Additive LOD.  It is possible to create LODs within the object that are drawn at the same time (e.g. the detail is added to the base mesh), saving memory and improving performance.
+Shadow blending: a new blending mode provides blended behavior for drawing but non-blended behavior for shadows.
+Instancing: the X-Plane 10 OBJ engine supports instancing under some conditions.  This spec will note features that are and are not instancing compatible.
+In X-Plane 10, objects support conditional directives – see the beginning of the syntax section.
+CHANGES FOR 940
+The following features are available in X-Plane 940:
+
+TEXTURE_NORMAL for attaching noraml and specular maps to an object.
+LIGHT_PARAM for customized lights.
+CHANGES FOR 930
+The following features are available in X-Plane 930:
+
+ATTR_light_level and ATTR_light_level_reset
+ATTR_draw_enable/disable
+ATTR_solid_camera/no_solid_camera
+CHANGES FOR 920
+The following features are available in X-Plane 920 and later.
+
+Manipulators
+CHANGES FOR 900
+The following features are available in X-Plane 9 and later.
+
+Key Frames
+Panel Regions
+Deck-style hard surfaces
+CHANGES FOR 850
+The following features are available only in X-Plane 850 and later.
+
+Custom and named lights.
+Layer groups.
+More control of blending and hard surfaces.
+Show/hide animation commands
+OBJECT CONCEPTS
+FILE TYPE AND COMPATIBILITY
+X-Plane 8 and 9 object files (OBJ8) are text files that consist of records (one per line) describing a single 3-d model.
+
+OBJ8 is not meant to be forward compatible; it is assumed that when the file format is extended, readers written to this specification will not be able to meaningfully display the future model file (which may depend on new features).
+
+OBJ8 is meant to be backward compatible; it is assumed that readers of a future OBJ8 revision will continue to read current OBJ8 files.
+
+COORDINATE SYSTEM AND GEOMETRY
+OBJ8 models are specified in meters. In their native orientation, the positive Y axis points up, the positive X axis points east, and the positive Z axis points south. (This is a right-handed coordinate system.) The point 0,0,0 is a point on the ground where the object has been placed in x-plane scenery. The X-Plane scenery file referencing the object may rotate the object clockwise around the Y axis.
+
+STATE, COMMAND
+An X-Plane 8 OBJ model is specified via commands, which build the model in a certain order. There are four kinds of fundamental commands:
+
+Geometry commands create geometry, to be drawn in the order they are created.
+State commands affect how future geometry is drawn.
+Action commands have an affect on the sim.
+Animation commands change the shape of the subsequent geometry in real-time.
+State has ‘memory’. For example, all geometry is drawn with only the front visible, until you set the drawing state to “two-sided mode”. At this point, all geometry is drawn with both sides visible until the drawing state is set to “one-sided” mode again.
+
+State change is more than just a way to specify how to draw certain geometry; state change actually affects drawing performance in the simulator. The simulator must stop bulk-drawing geometry to change state, so minimizing the number of state commands will generally improve performance.
+
+Because X-Plane does not reorder geometry commands it is up to the writer to maximize performance by minimizing state commands within the scope of the flexibility of geometry order. Generally speaking, the number of commands (not counting the various tables) is a good proxy for the efficiency of your object–fewer commands is more efficient.
+
+Objects also have global properties; these do not interact with the mesh and have no ordering – they are simply meta-data for the object.  For example, the textures that are applied to the object are global properties.
+
+TABLES
+The geometry data (locations, texture coordinates, normals, etc.) for an OBJ8 model are stored in tables, separate from the command section. Table data may be shared in any order desired by the author.
+
+There are three separate geometry tables for triangles, lines, and point lights. There is also a separate index table that provides index numbers into the geometry or line tables for lines and lights. This second level of indexing allows a contiguous range of indices to refer to a smaller set of shared points. A single triangle command then dispatches a contiguous index range. Lights are not indexed; the light command refers directly to consecutive light table points.
+
+GLOBAL PROPERTIES
+Global properties refer to properties global to the entire object.  For example, the object’s textures and weight are all global properties.  They do not apply to any one part of the mesh.
+
+OBJ7 NOTE: unlike OBJ8, night lighting is not automatically loaded by looking for a _LIT file. A light map must be specifically indicated.
+
+LEVEL OF DETAIL
+An OBJ8 model consists of one or more “level of detail”. A level of detail can be thought of as a fully self-contained independent model within the object that shares all of the table data and attributes of the OBJ8 model. At any one time, only one LOD is ever drawn.
+
+LODs are specified for ranges in meters (this range is the range of the viewer to the object). This allows you to change the appearance of an object to a simpler model when viewing from far away.
+
+State is fully independent for LODs. In other words, if you set two-sided drawing in one LOD, the first triangle in the next LOD will be one-sided again automatically.
+
+If you do not specify any LODs, the entire model is treated as a single LOD, whose range is calculated automatically by X-Plane.
+
+X-Plane 10 features two methods of LOD:
+
+Selective LOD.  X-Plane will draw the one LOD whose range brackets the camera distance.  LOD distances must be consecutive from closest to farthest.
+Additive LOD.  X-Plane will draw every LOD whose range brackets the camera distance.  LOD distances must all start from zero and be ordered from closest to farthest.
+ANIMATION
+With OBJ8 it is possible to animate models. Animation is done by specifying transformations of ranges of geometry.
+
+Animation is specified by pairs of begin/end animation commands. These commands may be nested to form hierarchical animations. Zero or more rotation and translation commands may be used in each nesting level.
+
+Animation is driven by datarefs. A dataref is a flight simulator variable with a published well-known string name. 1100+ datarefs are defined by X-Plane and listed on the X-Plane SDK website; plug-ins can also create additional datarefs that can drive animation. Animation commands allow for a scaling of datarefs to convert easily from the native units of the sim to ranges that are useful for animation.
+
+To calculate the extent of a translation or rotation, X-Plane finds a pair of key frames, or dataref/animation pairs, and then interpolates between the appropriate pair. Values that are not between any pairs are extrapolated from the nearest pair.
+
+X-Plane 8 only allows for two key frames (a “start” and “end”). X-Plane 9 allows for two or more key frames.
+
+MANIPULATION
+A manipulation is an action taken by a user on an object that changes the state of X-Plane. By setting the manipulation state, you define what clicking on triangles within an object accomplishes. Manipulations interact with animations under certain conditions.
+
+The current manipulation is changed via manipulator commands, which are a form of state command; any given triangle can only have one manipulation associated with it.
+
+X-Plane 920 supports the following types of manipulations:
+
+No Manipulation. If a mesh section is tagged as having no manipulation, it is not processed for click testing. The mouse clicks go “through” those triangles. This is the fastest manipulation – all other manipulations consume per-CPU resources.
+Panel Texture Manipulations. A click to the triangle causes a click to the 2-d or 3-d panel, with the texture coordinates “mapping” where the click takes effect. Click locations are undefined if the panel texture is not in use. (In practice, this manipulation is never available on a non-panel-textured triangle, due to the OBJ file syntax.) The mapping correctly maps through both ATTR_cockpit and ATTR_cockpit_region.
+XY Drag Manipulations. Two datarefs are changed based on the drag distance along the X and Y axis in screen space. This is primarily provided for 2-d controls like yokes.
+Axis Drag Manipulations. A dataref is changed based on a drag along an arbitrary object-space axis. The axis is “locked” at the moment of click, so changes to the drag location (in object space) due to the pilot’s head turning or due to animations do not affect the axis. Effectively at the instant of click-down the axis is converted from 3-d to 2-d pixels on screen and left that way. This provides a more predictable drag experience for users.
+Command Manipulations. Clicking on the mesh section causes a command to be actuated while the mouse is down.
+Command Axis Manipulations. Dragging along either dimension of an arbitrary object-space axis invokes one of two commands, depending on the drag direction.
+No-Op Manipulations. No action is taken, but this manipulator “blocks” the click, so that no further mouse processing is done. This makes triangles “solid” for mouse clicking.
+X-Plane 930 adds the following “dataref” manipulators (that is, manipulators that change a dataref in response to a click):
+
+Push button. The dataref is changed on click, and then on release.
+Radio button. The dataref is changed on click by multiple manipulators.
+Toggle button. The dataref is changed on click between two different values.
+Delta. The dataref is changed slightly on click or hold, with limits on total range.
+Wrap. The dataref is changed slightly on click or hold, and wraps around when out of range.
+X-Plane 10.10 adds the following manipulator:
+
+Drag-Axis.  The dataref is increase by dragging to the right or up (user’s choice) and decreased by dragging to the left or down.  The travel of the drag is specified in pixels, and it can be set for non-linear response (slow changes with small movements, and disproportionately large changes with big movements.
+X-Plane 10.50 adds the following new manipulators:
+
+Command knob/switch manipulators.  These manipulators run a pair of commands as the knob/switch is moved up and down.
+Dataref knob/switch manipulators. These manipulators provide similar functionality to the command manipulators, but using datarefs for the case where commands don’t exist.  The command manipulator is preferred.
+A wheel attribute can be added to existing manipulators to allow the mouse wheel to affect them.
+X-Plane 11.10 adds the following new manipulators:
+
+2-position knob/switch manipulators.  These manipulators take a single command that toggles in the sim, but they semantically describe a motion (rotating, moving up/down and left/right).  They are designed to let simple toggle-based two-position switches work in VR.
+Rotation manipulator (with optional detents) – this models a rotating handle like a throttle quadrant.
+Detents on linear axes – a detent can be added ‘to the side’ on a linear axis, e.g. like a Cessna flap lever.
+Manipulations are affected by the animation commands that surround them – that is, if an axis manipulation is inside a rotation, the axis will rotate based on the rotation.
+
+Manipulations also take into account the animations on the triangles that are clicked. This includes all animations that affect the triangle. In other words, if you set a command manipulation, draw some triangles, then animate and draw more triangles, both groups of triangles are click-tested, and the click-test location will match the animation, even though the animation is after the beginning of the manipulation. (In other words, mouse click testing always matches drawing.)
+
+OBJECT GEOMETRY TYPES
+The fundamental geometry types for OBJ8 are:
+
+Triangles. Triangles are textured and have a normal defined per vertex for lighting purposes. The front of the triangle is the face where the vertices appear in clockwise sequence.
+Lines. Lines have an RGB color.
+Lights.While RGB lights are possible, named lights are strongly recommended.
+OBJ7 NOTE: RGB values in OBJ8 are always from the scale 0-1, even for lights and lines. This means the special light commands map to 9.9, 9.8, etc. instead of 99, 98.
+
+MESH PLANES
+Conceptually an object has four “planes” of information that a triangle can be part of:
+
+Drawing plane – the user can see the triangle. All triangles normally are in the drawing plane.
+Physics plane – the triangle causes collisions in the physics engine. Authors put a triangle in the physics plane with ATTR_hard, etc.
+Manipulation plane – the triangle can be clicked with the mouse. Authors put a triangle in the manipulation plane with a manipulator or ATTR_cockpit. Only triangles in the cockpit object can be in the manipulation plane.
+Camera plane – triangles will impede the movement of the 3-d camera. Authors can put a triangle in the camera plane to constrain where the user can look in 3-d. Only triangles in the cockpit object can be in the camera plane.
+A triangle can be in no planes, or more than one plane. Attributes are used to control whether triangles go to each plane.
+
+The choice of which plane a triangle is in is static. Planes are different from hide animations; a triangle hidden by a hide animation is hidden from everything – physics, drawing, clicking, and camera movement. Planes are provided to allow authors to use different geometry for camera constraint, clicking, physics and drawing.
+
+Lines, lights, and smoke puffs do not ever go in the physics manipulation or camera planes. Therefore it does not make sense to include them in a non-drawn part of the OBJ file.
+
+Some example uses might illustrate the motivation behind multiple planes:
+
+A manipulatable triangle can be made non-drawable, allowing an author to place large, easy-to-click “hot-spots” in front of the mesh of a switch that might otherwise be hard to click due to its shape.
+An author can make a separate mesh to constrain the camera that is not drawn–this separate mesh can be water-tight, much lower in triangle count, and be inset from the walls a bit to keep the camera from getting into strange places.
+[New in 1000:] Draped geometry does not sit in the “mesh planes” it is essentially separate geometry carried along for draping purposes.
+
+DRAPING
+For scenery objects in a DSF, X-Plane can “drape” the triangles in the mesh onto the ground.  During the draping process, triangles are subdivided as necessary to ensure that the triangle can be coplanar with the ground (even if the ground is not flat).  The subdivided triangles are then moved verticaly at each vertex to make the entire mesh coplanar with the ground.  The draped triangles are drawn with polygon offset to ensure perfect tiling; in this way triangles can be drawn over the ground even if it is not flat.
+
+Draped triangles effectively exist “outside” of the object – that is, they ignore all attribute state, have their own global properties, and are not subject to the main LOD system.  The triangles are specified within an LOD in the file, but that is only for syntax reasons.
+
+OBJECT STATE
+OBJ8 defines and tracks the following object state:
+
+[deprecated] Flat/Smooth shading (default is smooth). In flat shading, the entire triangle is drawn with the same brightness. In smooth shading, the corners of the triangle have the shading levels appropriate for their normals, and the interior is interpolated. Note that since flat shading can be simulating via per-vertex normals, it is usually better to only use smooth shading.  (Flat shading is deprecated – flat shaded geometry should be created by creating vertices with the face normal in the modeling command; the extra vertex count is less costly in performance than the attribute.)
+[deprecated] One-sided vs. Two-sided geometry (default is one-sided). With one-sided geometry, a triangle is only drawn if the front of the triangle is visible to the user. With two-sided, both sides are drawn.  It is often optimal to double geometry to avoid small groups of two sided geometry in a one-sided object.  (Two-sided drawing is deprecated; modeling exporters should duplicate the geometry with flipped orientation and normals – this ensures the lighting queues on the back side of geometry are not wrong.  Again, the duplication of vertices is cheaper than the attribute!)
+Panel vs. object texture (default is object). Normally triangles are textured via the texture (and light overlay) named in the TEXTURE and TEXTURE_LIT attributes. When panel texture is turned on, the plane’s 2-d panel is used as a texture.  The lighting model for panel texturing may be “flat” (meaning no lighting calculations are provided) or “real” (meaning the full 3-d lighting system is used, matching the rest of the object); which lighting system is invoked depends on which attribute is used to select panel-texture drawing.
+Polygon offset amount (default is 0). This is an amount to draw your geometry above the terrain, with zero being none and one being the minimum amount above the terrain that can be represented by the OpenGL hardware. The object is not drawn differently in its position; this offset is only used to make the decision about whether your object appears “on top of” the terrain in a two-dimensional flat screen sense.  [New in 1000:] draping provides an alternative to polygon offset.
+Blend off/on/shadow (default on). Normally an alpha pixel in the object texture that is neither fully opaque nor fully transparent is drawn as translucent with the background showing through. However this can cause artifacts in some conditions. When blending is turned off, all alpha values above a fixed alpha percent are treated as fully opaque and all alpha values below that alpha percent are treated as fully transparent.  [New in 1000:] In shadow mode, shadows are not blended but primary drawing is; this is available only in XP1000.  The cutoff ratio for non-blended geometry can be altered with state commands.  NOTE: even if a bitmap has only fully opaque or transparent pixels, some may be rendered translucent due to the effects of interpolation as a texture is resampled.
+Polygon physical properties (default is none). Normally triangles in an OBJ8 model do not interact with the X-plane physics model; when this state is on, they do. Doing physics calculations against triangles can be slow for large numbers of triangles, so do not simply turn this on for every object. [New in 850:] Starting with X-Plane 850 you can specify the type of physical surface for geometry. Before 850, the choice was simply physical or not. [New in 900:] Starting with X-Plane 900 you can specify a hard surface to be a “deck”, meaning the user can fly under it or land on top of it. Before 900 only “solid” physical surfaces were available–flying under a solid physical surface counts as a collision.
+Materials. You can change the balance of color contributions from the lighting model for your geometry. Those parameters are:
+[deprecated] Diffuse (RGB) – the brightness of the geometry due to the sun.
+[deprecated] Emissive (RGB) – the brightness of the geometry due to it radiating light.
+[deprecated] Shininess (RGB) – the sharpness of specular highlights (0-1).
+(It is strongly recommended that albedo and emissive color changes be made using the day and lit textures and not these material attributes!  Texturing is very cheap and usually already necessary; attribute changes are expensive.  Shininess can be set by globally setting specularity to 1 and using a gray-scale or RGBA normal map to set per-pixel specularity.) The relationship between these colors and OpenGL: the diffuse color sets the diffuse and ambient OpenGL colors. The emissive color maps to the emissive OpenGL color. The shininess ratio sets all three components of the specular hilight color with a specular exponent of 128. The defaults are full diffuse, no shininess and emissive, but use ATTR_reset to restore the default lighting properties for X-Plane.
+
+[New in 920:] The current manipulation.
+[New in 930:] Enable/disable state for the drawing and camera planes.
+[New in 1010:] Whether shadow-casting is enabled/disabled.
+TEXTURE APPLICATION
+X-Plane’s lighting/texturing model consists of separate albedo and emissive inputs. An X-Plane object can reference three textures:
+
+The “daytime” (albedo) texture for the object, specified via the TEXTURE command. This command is mandatory – if the texture name is blank, a gray proxy texture is used.
+The “_LIT” (emissive) texture for the object, specified via the TEXTURE_LIT command. This command is optional.
+A normal map, specified by TEXTURE_NORMAL. The normal map is optional, and is ignored unless the user has enabled per-pixel lighting. The normal map contains specular strength in the alpha channel.
+Normally these three textures are used to texture triangles. When ATTR_cockpit_region or ATTR_cockpit is used, the panel, the panel replaces the albedo and emissive textures, and normal mapping is disabled. When ATTR_cockpit_lit_only is used, the panel replaces only the emissive texture (which is useful for computer screens).
+
+When ATTR_cockpit_device is used, the image of the screen for that GPS device replaces the lit texture; the albedo and normal map are retained from the object itself. ATTR_cockpit_device is not a seperate panel mode. The same .obj can have ATTR_cockpit_devices and use of the panel texture
+
+For more information on Normal Map format and application, see: Normal Maps.
+
+[New in 1100:] NORMAL_METALNESS can be appended after a TEXTURE_NORMAL or TEXTURE_DRAPED_NORMAL directive to set the texture to use the blue channel to set base reflectance (how much light is reflected off of the surface at an orthogonal angle). See the X-Plane 11 Material Model for more..
+
+IMPORTANT: the shininess level in the normal map alpha channel is modulated by the input to ATTR_shiny_rat/GLOBAL_specular, which defaults to 0.0. Thus you must use ATTR_shiny_rat to see the effects of the alpha channel in a normal map.
+
+OBJECT GLOBAL PROPERTIES
+X-Plane 9 objects have only a few properties: the texures used for albedo, emissive, and normal/specular, and the weight of the object.
+
+X-Plane 10 introduces a large number of new global properties:
+
+A second set of textures (albedo/emissive/normal+specular) for draped textures.  If these are not specified, the object textures are used.
+LOD and layer group properties for draped geometry.
+Tinting for instancing.  These are ratios to vary the albedo color and emissive level on a per-instance basis to add variation to instanced objects.
+Slope-limit.  This allows the sim to eliminate library object choices during placement based on the slope of the ground.
+Wet/dry requirement.  This allows the sim to eliminate library object choices during placement based on the underlying surface.
+Tilting.  This declares that the object tilts to be normal to the ground (e.g. the Y axis is normal to the ground, not facing the gravity vector).
+With X-Plane 10, the following state can be set globally as a global property on the object.  This effectively changes the state of the object as it begins.  State that can be set:
+
+Blending (GLOBAL_no_blend/GLOBAL_shadow_blend/ATTR_no_blend/ATTR_blend/ATTR_shadow_blend).
+Specularity (GLOBAL_specular, ATTR_shiny_rat).
+With X-Plane 11, another blending change can be set, BLEND_GLASS. BLEND_GLASS makes an object’s glass to make the diffuse channel translucent while keeping specular effects, for reflections on clear glass. Read more about it in X-Plane 11’s Material Model.
+
+COCKPIT FEATURES
+The OBJ format is used to model objects that are part of airplanes, part of the cockpit environment, and part of the scenery system. Some features are only appropriate to the cockpit.
+
+Cockpit features can only be used in objects that are attached to the object as the “cockpit object”–this object undergoes special processing. Other attached airplane objects and scenery objects cannot use these features.
+
+Panel Texture
+Changing the object texture to the “panel” texture does two things: it changes the texture used to draw from the OBJ’s texture (specified with the TEXTURE command) to the 2-d panel.  There are a number of ways to use the cockpit texture; the following table summarizes them.
+
+The panel texture can be accessed by ATTR_cockpit, ATTR_cockpit_lit_only, or by using ATTR_cockpit_region with one or more COCKPIT_REGION definitions in the header of the OBJ file.  Optionally GLOBAL_cockpit_lit can be added to either directive.  The following table summarizes the effects of the various command combinations:
+
+ATTR_	cockpit	cockpit_region	cockpit	cockpit_region	cockpit_lit_only
+Use Regions	No	Yes	No	Yes	No
+GLOBAL_cockpit_lit	No	No	Yes	Yes	Yes
+Transparency	Yes	No	Yes	Yes	Yes
+Power of 2	Not Required	Required	Required	Required	Required
+3-d Lighting	No	Yes	Yes	Yes	Yes
+Min Version	8.x	9.x	10.x	10.x	11.1x
+(cockpit and cockpit_region listed twice to show historical changes.)
+
+Use regions: do you need to define cockpit regions to use this attribute, or is the entire panel used?
+Transparency: will translucent areas of the panel appear translucent in the object?
+Power of 2: must the region or panel be a power of 2 in dimension.
+3-d Lighting: will the texture region be lit in 3-d by spill lights and the sun?
+Min Version: the minimum version of X-Plane supporting this combination of attributes.
+[New in 1010:] GLOBAL_cockpit_lit can be used to induce 3-d lighting even on non-region ATTR_cockpit. This provides authors a way to use translucency and 3-d lighting at the same time.
+
+[New in 1100:] As of X-Plane 11, the sim always acts as if GLOBAL_cockpit_lit is present.
+
+[New in 1110:] GLOBAL_cockpit_lit also now works with ATTR_cockpit_lit_only
+
+Cockpit Regions
+[New in 900:] Instead of using the entire cockpit panel as a texture (using ATTR_cockpit), an object can establish up to four cockpit “regions”. These are textures defined by a sub-rectangle within the 2-d cockpit. Cockpit regions differ from using the full cockpit as follows:
+
+Cockpit regions must be a power of 2 in width and height.
+There can be up to four cockpit regions.
+Cockpit regions are not transparent–if the 2-d panel is transparent, the cockpit region texture in that area is undefined.
+Cockpit regions are recommended for efficiency reasons: between the use of transparency, non-power-of-2 panels, and the huge amount of a 2-d panel that is not useful for rendering, the 2-d panel ends up using a lot more VRAM and building a lot more texture area dynamically than necessary. By simply using a few smaller cockpit regions over key parts of the 2-d panel, greater frame rate can be achieved.
+
+OBJECT SYNTAX
+OBJ8 files are ASCII text files; the legal character set is the set of printable 7-bit ASCII files.
+
+Lines are defined by newline character sequences, which are one of:
+
+Macintosh: a single CR (13)
+Unix: a single LF (10)
+DOS: a CR followed by an LF
+Any one choice of newline sequences may be used consistently throughout the file.
+
+One or more Tabs (8) and/or spaces (32) are treated as white space.
+
+A sequence of legal characters that does not contain any newlines may be referred to as a line, and a sequence of legal characters that does not contain any newlines or whitespace may be referred to as a word.
+
+Word and keyword identification is case-sensitive. Numbers are represented by an optional minus sign, one or more digits, optionally followed by a period and one or more digits. All numbers in objects may be floating point.
+
+The object file consists of a 3-line header followed by a series of records, each of which is one line. A record’s type is identified by the first word of the record. Blank lines are legal after the header, and records starting with a # are treated as blank lines, allowing for comments.
+
+The header lines consist of:
+
+Line 1: either the characters A or I – it is recommended that A be used for Macintosh line ending files and I for Unix or DOS line ending files.
+Line 2: the file version number (currently 800) followed by optional whitespace and additional comment characters.
+Line 3: the word OBJ.
+Each single-line record is identified by its first word; see the command listing below for precise record descriptions.
+
+Coordinates are specified as a triplet of numbers representing XYZ Cartesian coordinates in meters.
+
+Normals are specified as a triplet of fractions forming a 3-space vector whose length is 1. The vector is interpretted in the same coordinate space as the geometry.
+
+Texture coordinates are specified as a pair of fractions from 0-1. The first one represents a ratio from the left to the right side of the texture, the second from the bottom to the top.
+
+Colors are represented as fractions from 0-1 representing minimum to full color intensity. Colors are usually RGB triplets.
+
+OBJECT SEMANTICS
+Records fall into three categories: attributes, data, and commands. The order of the file must feature all attributes first, then all data, then all commands. Attribute records can be in any order. Data record types can be in any order, but ordering within a type of data record defines the indexing interpretation. Commands are executed in the order of the records in the file and are never re-ordered at any point (allowing for certain translucency and authoring tricks).
+
+LODs
+An OBJ may optionally feature LODs in one and only one of two modes: Selective LOD or Additive LOD mode. The LOD feature is turned on by using one or more ATTR_LOD directives. An OBJ’s ATTR_LODs must follow these rules:
+
+The first (or only) ATTR_LOD must be the first command record
+The near value of the first (or only) ATTR_LOD must be 0
+All LODs must be ordered from nearest to farthest
+If every ATTR_LOD’s near value is 0, the OBJ is using Additive LOD mode. Otherwise the OBJ is in Selective LOD mode.
+An object must be exclusively Additive or Selective, no switching is allowed
+If using Selective mode, each ATTR_LOD’s near distance must match the previous ATTR_LOD’s far distance (or be 0 for the first ATTR_LOD). No overlaps or gaps between ranges are allowed
+No ATTR_LOD’s near and far can be equal
+All possible optimizations are applied regardless of whether or not an OBJ has LODs. There is no requirement for an object to reset state to its initial setting at the end of an LOD; the simulator takes care of this.
+
+All animation commands must be within an ANIM_begin / ANIM_end pair.
+
+All ANIM_begin/ANIM_end pairs must be properly balanced within each LOD.
+
+Animation commands (ANIM_rotate and ANIM_trans) must occur immediately after ANIM_begin. However any number of animation commands may be used consecutively after a single ANIM_begin.
+
+The POINT_COUNTS and TEXTURE attributes are required.
+
+Hard polygons are not allowed in any LOD except for the first one.
+
+Cockpit features (panel texture/panel regions, manipulation, camera plane enable) can only be used in objects that are attached to an airplane via the COCKPIT_INN.obj or COCKPIT_OUT.obj mechanism.
+
+[New in 900:] Key frame tables must be listed from lowest to highest key frame dataref value.
+
+This is not required, but it is recommended: if your object has lights and multiple LODs, use the exact same lights in each LOD. X-Plane’s OBJ engine does special processing on lights to both increase the distance at which they are visible and improve framerate. If the lights specified in each LOD are different, you may either get incorrect drawing, or lower framerate. The fastest code path is to let X-Plane do the same lights at every LOD.
+
+Conditionalization
+[X-Plane 1000:] X-Plane 10 supports the conditionalization of OBJ files.  Conditionalization is a process whereby the contents of a file are skipped or used depending on rendering settings.  Typical uses of conditionalization are to change the appearance of an object when shadows are enabled, or when HDR is on.
+
+Conditionals for OBJs occur in the form of these commands:
+
+IF <var>
+IF NOT <var>
+ELSE
+ELSE IF <var>
+ELSE IF NOT <var>
+ENDIF
+
+The file lines inside the conditions are only used when the variable is true (or false).
+
+The variables supported in X-Plane 10 are:
+
+GLOBAL_LIGHTING – True when HDR mode is on
+
+GLOBAL_SHADOWS – True when any level of global shadowing is enabled. At this level airplanes have shadows, scenery may or may not
+
+SCENERY_SHADOWS – True when GLOBAL_SHADOWS is true and scenery is shadowed
+
+VERSION10 – Always 1.  Since conditionals are not supported in v9, you can put v9 only art in place using IF NOT VERSION10.
+
+Note: conditionals do not use datarefs!  The conditionals change the nature of the file once at load time, and the file is reloaded when rendering settings change.  This has two key implications:
+
+Conditionals are not useful for real-time or dynamic changes/tricks.  You cannot, for example, change textures with a dataref using this feature.
+Since conditionalization happens on load, there is no penalty for using an attribute that is conditionalized out.  For example, if you use ATTR_emission_rgb for night lighting only when global lighting is off, this attribute effectively does not exist when lighting is on, and thus with lighting on your object has no attributes and will hit the fast path for code.
+GLOBAL PROPERTY RECORDS
+Global property records define the overall properties of the entire object.  Besides a few bits of meta-data (e.g. how much does the object weigh) global properties can set the default shader state for the entire object.
+
+Optimization Note: global properties set the default shader state of the object, and therefore they had different performance characteristics than the regular ATTR commands, which only set an attribute for part of a mesh.
+
+Global attributes are hardware-instancing friendly.
+Global attributes force another shader-layer into the overall scene-graph.
+Do use global attributes when you do not need any other ATTRibutes.  For example, if an entire object is ATTR_no_blend, it is often a good idea to use GLOBAL_no_blend.
+Do not use global attributes if you need multiple attributes.  If an OBJ ping-pongs between ATTR_blend and ATTR_no_blend, the global attribute isn’t any help – you still are stuck with two draw calls and no hardware instancing.
+Global attributes are superior to ATTRibutes when an object is used multiple times in a DSF.
+Global attributes are not superior to ATTRibutes when an object is used only once.
+Special notes for GLOBAL_no_shadow: GLOBAL_no_shadow cannot appear in the same file as ATTR_shadow and it can appear in non-instanced scenery files.
+
+GLOBAL_luminance <nts>
+[New in 1200:] Sets the nits value for the lit texture used for rendering.
+
+PARTICLE_SYSTEM <particle_file_path>
+[New in 1130:] The .pss file that defines particle systems for EMITTERs in this OBJ. If particles are used, a particle system file must be provided. An OBJ with a PARTICLE_SYSTEM directive but no EMITTERs results in a warning, not an error. Only one PARTICLE_SYSTEM per OBJ is allowed.
+
+TEXTURE <tex_file_path>
+This defines the texture to be used with this object. Use this record with only white space to indicate that the object has no texture requirement.
+
+TEXTURE_LIT <tex_file_path>
+This defines the lighting overlay. Omit this record if you do not require a lighting overlay.
+
+TEXTURE_NORMAL <tex_file_path>
+[New in 940:]This defines an additional texture to be used as a specular + normal map. See “texture application” above for the formats of texture and normal maps.
+
+TEXTURE_MAP <usage> <tex_file_path>
+[New in 1200:] Provide a texture file with a given usage. Valid usages are normal, material_gloss, gloss.  The channels of each texture are interpreted depending on usage. TEXTURE_MAP cannot be used with TEXTURE_NORMAL.
+
+Usage	Red	Green
+normal	Normal X	Normal Y
+material_gloss	Material-dependant	gloss
+gloss	gloss	Ignored
+WEATHER SYSTEM
+RAIN_scale <ratio>
+[New in 1200:] Scales the visual output of rain to match texture resolution.
+
+RAIN_friction <dataref>
+[New in 12.1] Default is 1. Decreasing the value will decrease glass friction and also decrease the likelihood of rain drops becoming streaks
+
+THERMAL_texture <tex_file_path>
+[New in 1200:] Texture file of condensation pattern on windshield. Max 1 per OBJ
+
+THERMAL_source <temperature_dataref> <toggle_dataref>
+[New in 1200:] Temperature dataref controls the temperature output of the heater. Toggle dataref controls if the heater is on or off. 1st directive is 1st thermal source and so on.
+
+THERMAL_source2 <heat in ºC dataref> <on/off_toggle_dataref>
+[New in 12.1:]  <heat in ºC dataref> is clamped between 5º and 20º C and then gets interpolated into a rate between 5 and 20 seconds.
+
+WIPER_texture <tex_file_path>
+[New in 1200:] Path to a wiper gradient texture, which uses its RGBA slots (1 per wiper in the rain system) to define the wiper’s path across the windshield. One texture is used per OBJ.
+
+WIPER_param <dataref> <start> <end> <nominal_width>
+[New in 1200:] Parameters per-wiper. dataref is the wiper animation controller, start and end define the ranges of the start and end dataref values of the wiper animation. Nominal width is the width of the wiper as the percent of the wiper animation arc that is covered by the blade at rest – basically the width of the physical blade. 1st directive is the 1st slot and so on.
+
+POINT_COUNTS <tris> <lines> <lites> <indices>
+This defines the size of the data tables. Four integer numbers define the number of entries in each table.
+
+slung_load_weight <mass weight in pounds>
+This defines the weight of the object, for use in the physics engine if the object is being carried by a plane or helicopter.
+
+ATTR_layer_group <name> <offset>
+[New in 850:] X-Plane draws scenery in “layer groups” – all elements in the same layer group are drawn before all other groups, but within a layer group the drawing order may be optimized by X-Plane. Normally layer groups are determined by X-Plane based on the type of drawing. Objects have always had their own layer group.
+
+When the ATTR_layer_group is included somewhere in an object (it need only be used once, even if you have multiple LODs) then the object is drawn in a different layer group. The offset is used to prioritize further–for example. the group + 1 is drawn after the group, and the group – 2 is drawn two layers before objects. You can use an offset from -5 to + 5.
+
+The valid layer names are:
+
+terrain, beaches, shoulders, taxiways, runways, markings, airports, roads, objects, light_objects, cars
+
+Note: the group “airports” covers all airport drawing. Within this group are the sub-groups shoulders, taxiways, runways, and markings. Markings are for taxilines and thus are on top of all other layers.
+
+COCKPIT_REGION <left> <bottom> <right> <top>
+[New in 900:]This defines a cockpit region – the rectangle of the region is in pixels where 0,0 is the lower left of the 2-d cockpit panel. The cockpit region can have any position as long as (1) its width and height are powers of (2) it does not go off the edge of the 2-d panel. Panel regions are referred to by index numbers: the first COCKPIT_REGION is number 0. There can be up to four cockpit regions in an object.
+
+GLOBAL_luminence <luminance>
+[New in 1200:] The baseline luminance for the LIT texture, in nts. Value is clamped at 65530.
+
+GLOBAL_no_blend <ratio>
+[New to 1000:] This sets the default state of the object to alpha testing (but not blending) where ratio is the alpha cutoff ratio, from 0.0 to 1.0.  This is comparable to ATTR_no_blend.  See the note above about hwen to use global vs per mesh attributes.
+
+GLOBAL_shadow_blend <ratio>
+[New to 1000:] This sets the default state of the object to shadow blending – that is, blending for drawing but alpha testing with ratio as a cutoff when shadow maps are drawn.  For example, if you have a hanger with a skylight (and the skylight is 10% alpha to put some “dirt” on the window) you can use this to “cut” the window for the shadow (using alpha testing) while keeping blending for primary drawing.
+
+GLOBAL_specular <ratio>
+[New to 1000:] This sets the default specular level of the object to <ratio>, from 0 to 1 – this is similar to ATTR_shiny_rat.  Note that you must set a non-zero specular level to use the specular channel of a normal map, because X-Plane draws the product of the overall specular gain and the alpha channel – this is a “master level”.  If you have a normal/specular map attached to an object, you should almost always use GLOBAL_specular 1.0 and not ATTR_shiny_rat.
+
+GLOBAL_tint <albedo tint> <emissive tint>
+[New to 1000:] This establishes a variance in brightness for instanced objects.  If an object is subject to hardware instancing, the two tint ratios are used to darken the albedo and emissive light levels.  The ratios are from 0.0 (no darkening, the default) to 1.0 (total darkening).  Small amounts of global tint can break up repetition.
+
+GLOBAL_no_shadow
+[New to 1010:] This marks an object as being entirely excluded from shadowing.  The object will cast no shadows.  If you don’t want shadows for your object, it is typically better for performance to try clever tricks with ATTR_shadow_blend or GLOBAL_shadow_blend – those attributes are really meant for objects that do cast shadows but have translucency (e.g. a window in a building).
+
+SLOPE_LIMIT <min pitch> <max pitch> <min roll> <max roll>
+[New to 1000:] This directive establishes the maximum slope limit an object will tolerate (in degrees) for library objects placed in a DSF.  When X-Plane selects the object, it will look at the actual pitch (forward-back tilt relative to the object) and roll (side-to-side tilt relative to the object) and will skip objects that have too much tilt.  Minimum pitch represents the ground sloping down at the front of the object, and minimum roll represents the ground sloping down to the left of the object.
+
+Typically the way you would use this directive is: you would create several objects that share a common library virtual path, and then mark each one with slope limits based on its tolerance to slope.  At least one object would be built with a basement or other feature to handle steep slope.  As the object is placed, the sim can then avoid using objects that will look wrong on slope.
+
+This directive applies only to objects placed into a scenery tile.
+
+<min pitch> <max pitch> and <min roll> <max roll> must be within -90 to 90 degrees, inclusive.
+
+TILTED
+[New to 1000:] This directive causes objects placed on a scenery tile to sit “on” the ground even if it is sloped; the coordinate system of the object is rotated so that the Y axis is normal to the ground (instead of the Y axis being aligned with gravity).  For example, a parked car object that is tilted will appear to “sit” on the ground even on a slope.
+
+This directive applies only to objects placed into a scenery tile.
+
+REQUIRE_WET/REQUIRE_DRY
+[New to 1000:] These directives establish whether an object should be used over wet or dry terrain when placed from the library.  Typically you would make two objects with the same virtual library path and mark one as REQUIRE_WET and the other as REQUIRE_DRY.  The sim will then, when looking through library objects, choose the right object based on the physical properties of the mesh.  For example, the bridge pylon bases come in pairs (a wet and dry version) with these marking, so that the pylons that are in water can have water marks.
+
+This directive applies only to objects placed into a scenery tile.
+
+ATTR_layer_group_draped <group> <offset>
+[New to 1000:] This directive establishes the layer group for draped geometry from this object.  group and offset are the same syntax as ATTR_layer_group.  If no layer group is specified, draped geometry will go into the “objects” layer -5.
+
+ATTR_LOD_draped <max LOD>
+[New to 1000:] This directive establishes the maximum LOD distance for draped geometry; if it is omitted, draped geometry will take the maximum OBJ LOD distance.
+
+GLOBAL_cockpit_lit
+[New to 1010:] This directive changes ATTR_cockpit to use 3-d lighting, and it changes ATTR_cockpit_region to allow translucency.
+
+Standard Shader Commands
+The texturing of the draped triangles can be customized to use another texture besides the object’s texture.  To do this, include standard shader commands in the OBJ – the albedo texture of the standard shader (“TEXTURE”) should be listed after all regular textures have been specified.
+
+OBJs support all of the standard shader features, for use in the draped texture:  TEXTURE, TEXTURE_NOWRAP, TEXTURE_LIT, TEXTURE_LIT_NOWRAP, TEXTURE_NORMAL, TEXTURE_NORMAL_NOWRAP, NO_BLEND, TWO_SIDED, SPECULAR, BUMP_LEVEL, and NO_SHADOW.  See the separate “standard shader” file specification for these commands that are common to a large number of file formats.
+
+DATA RECORDS
+VT <x> <y> <z> <nx> <ny> <nz> <s> <t>
+This defines a single entry in the triangle vertex table. These are indexed starting from zero based on the record order. The eight numbers represent a triplet coordinate location, a triplet normal, and a pair forming a texture coordinate. This table is only used for triangles.
+
+VLINE <x> <y> <z> <r> <g> <b>
+This defines a single entry in the line vertex table, a triplet coordinate location and a triplet color value (RGB, from 0-1). This table is only used for line primitives.
+
+VLIGHT <x> <y> <z> <r> <g> <b>
+[deprecated] This defines a single entry in the light vertex table. Again we have a coordinate triplet and RGB triplet. Colors are 0-1 with some special rules:
+
+If any value is negative, the light is considered to be flashing.
+If the triplet value is all 9.9, it is a pulsing red light.
+If the triplet value is all 9.8, it is a strobe light.
+If the triplet value is all 9.7, it is a traffic-light.
+WARNING: the specialized light values based on the 9.x series may not be supported precisely in future OBJ specs, and are not recommended. They are provided for compatibility.
+
+IDX <n>
+IDX10 <n> <n> <n> <n> <n> <n> <n> <n> <n> <n>
+This defines one or ten entries in the index table. The index table is used to refer to vertices in the triangle or line vertex tables. Indices are zero based, and numbers are zero based into the vertex tables. In other words, an index whose value is “4” can refer to the 4th index in either the line or the triangle table, depending on the command using these indices. IDX10 is provided to pack 10 indices onto one line.
+
+COMMAND RECORDS
+GEOMETRY COMMANDS
+TRIS <offset> <count>
+This command draws count/3 triangles based on the vertices referenced by the indices starting at ‘offset’ in the index table and running consecutively upward. (In otherwords, the indices must be adjacent, but they can refer to non-adjacent vertices). Count must be a multiple of 3. Vertices come from the triangle table.
+
+LINES <offset> <count>
+This command draws count/2 line segments based on the vertices referenced by the indices starting at ‘offset’ in the index table and running consecutively upward. Vertices come from the line table. Count must be a multiple of 2.
+
+[deprecated] LIGHTS <offset> <count>
+This command draws ‘count’ point lights whose positions are stored consecutively starting at ‘offset’ in the light table. Unlike the LINES and TRIS command, this command does not utilize the index table. This means that while triangles and lines can issue the same vertex multiple times in a single command, the lights command cannot repeat a light vertex multiple times without multiple light commands.
+
+NOTE: the ability to share vertices efficiently is important for triangles and lines which may be parts of meshes, but is not useful for lights.
+
+LIGHT_NAMED <name> <x> <y> <z>
+[New in 850:] Named lights allow a light to be created based on pre-existing types. The X Y Z parameters specify the light location.
+
+Note: the list of available lights will be published in the future.
+
+LIGHT_CUSTOM <x> <y> <z> <r> <g> <b> <a> <s> <s1> <t1> <s2> <t2> <dataref>
+[New in 850:] A custom light allows an object to contain a light with almost any properties. Here are a few differences between custom lights and traditional object lights:
+
+Custom lights are always textured. The RGB color is a tinting of this texture.
+Custom lights get their texture from the object texture – you must draw some kind of light halo into the object.
+A custom light has nine parameters (besides location). Each time the light is drawn, the parameters from the OBJ file are run through a dataref, which may modify or replace some or all of the parameters. How the dataref interacts with the parameters depends on the light–for example, some simply replace all parameters, some modify only one parameter, and some use the parameters as hints for their operation. See the plug-in SDK dataref docs for specific dataref info – X-Plane ships with several datarefs that are useful for custom lights, and plug-in authors can add more.
+
+If the dataref is not found (or if “NULL” is passed as a dataref name) then the 9 parameters are drawn unmodified. In this way a custom light gives you complete control over the drawing of lights even without plug-ins.
+
+The parameters are:
+
+RGBA – the color of the light (a tint that is applied to the texture) and alpha level, which makes the light dimmer. An alpha of 0.0 means the light will not be drawn.
+s – the size of the light – this is not in a particular unit (like meters), but larger numbers produce bigger brighter lights.
+s1,t1,s2,t2 – the texture coordinates (fractions from 0 to 1). S refers to horizontal coordinates, and T for vertical coordinates.
+LIGHT_PARAM <name> <x> <y> <z> [<additional params>]
+[New in 940:] A parameterized light is like a named light, except that some of the attributes of the light can be numerically modified. X, Y, and Z define the position of the light. The name selects a pre-defined light. The additional parameters vary in number and definition based on the particular parameterized light selected.
+
+LIGHT_SPILL_CUSTOM <x> <y> <z> <r> <g> <b> <a> <s> <dx> <dy> <dz> <semi> <dref>
+[New in 1000:] This creates a spill light with completely customized parameters.  The parameters are:
+
+x,y,z – the location of the light in 3-d space.  The light’s position and orientation do change with animation.
+r,g,b,a – the color and brightness of the light.  Alpha acts to dim the light.
+s – the size of the light in meters.  The size is the distance in meters at which the light is completely attenuated.
+dx, dy, dz – the direction the light points – a vector of length 1 in local coordinates.  This points from the light to its target.  For omnidirectional lights, you can leave these as 0,0,0.
+semi – the width of the light.  For an omnidirectional light, pass 1.0. For directional cones, semi is the cosine of half the spread of the light – so a light with a 90 degree total cone width has a semi-width of 45 degrees, so the semi parameter is cos(45 degrees), or about 0.7.
+dref – the name of the dataref to use to modulate the light or “none” if none.  <dref> should be a 9-float array dataref that optionally modifies the parameters (excluding x,y,z and dref).
+MAGNET <name> <type> <x> <y> <z> <psi> <the> <phi>
+
+[New in 1110:] Defines the mounting point on a yoke in the airplane where a VR tablet can be attached.
+
+name – Human readable name for debugging purposes
+type – “xpad”, “flashlight”, or “xpad|flashlight”
+x, y, z – position in space of the magnet
+psi, the, phi – degrees roll, pitch, heading in Eulers
+EMITTER <name> <x> <y> <z> <psi> <the> <phi> [index]
+
+[New in 1130:] Defines a particle emitter
+
+name – Name of the emitter. Using a name that isn’t found in the specified PARTICLE_SYSTEM file is an error.
+x, y, z – position in space of emitter
+psi, the, phi – degrees roll, pitch, heading in Eulers
+index – Optional, if left out it is assumed to be 0
+ACTION COMMANDS
+[deprecated] smoke_black <x> <y> <z> <s>
+[deprecated] smoke_white <x> <y> <z> <s>
+These commands cause the object to periodically emit a puff of block or white smoke from the location specified by x,y,z. S is a size number indicating the relative intensity of the smoke.
+
+TODO: what is the units of the smoke puff size parameter?
+
+STATE COMMANDS
+ATTR_landing_gear <x> <y> <z> <phi> <theta> <psi> <gear_index> <wheel_index>
+This command indicate that this object is a landing gear, which allows the simulator to accurately calculate the gear animations for the 3D model instead of referring to the Plane Maker model, which might not necessarily match the 3D model.
+
+ATTR_LOD <near> <far>
+LOD indicates the beginning of a new LOD, which should be used to represent the object when the viewer is between near (inclusive) and far (exclusive) meters.
+
+[deprecated and ignored] ATTR_ambient_rgb <r> <g> <b>
+[deprecated and ignored] ATTR_specular_rgb <r> <g> <b>
+[deprecated] ATTR_emission_rgb <r> <g> <b>
+ATTR_shiny_rat <ratio>
+These commands change the material state for geometry based on the OpenGL lighting model.
+
+ATTR_reset
+This command resets the material state to its default.
+
+ATTR_poly_os <n>
+This command sets the polygon offset state to N, a non-negative integer.
+
+ATTR_cockpit
+ATTR_cockpit sets the current texture to the panel texture and the current manipulator to the panel-click manipulator.
+
+The panel texture uses “flat” lighting (materials and lights are ignored, color matches the 2-d or 3-d panel) when it is invoked using this attribute.
+
+ATTR_cockpit_lit_only
+ATTR_cockpit_lit_only acts like ATTR_cockpit, but only replaces the emissive texture.
+
+ATTR_cockpit_region <region number>
+[New in 900:] The ATTR_cockpit_region attribute changes the texture of the object to a specific region of the cockpit texture. Use ATTR_no_cockpit when done. The current manipulation is set to panel clicking.
+
+The panel texture uses “real” lighting (materials and lights are utilized, color matches the object texture) when it is invoked using this attribute.
+
+ATTR_cockpit_device <name> <bus> <lighting channel> <auto_adjust>
+[New in 1100:] The ATTR_cockpit_device command changes the lit texture of the object to the screen of a given GPS device for an aircraft; it is legal only in aircraft-attached objects.  Use ATTR_no_cockpit when done.  Parameters:
+
+Name is the device name, one of GNS430_1, GNS430_2, GNS530_1, GNS530_2, CDU739_1, CDU739_2, G1000_PFD1, G1000_MFD, G1000_PFD2.
+The bus is a little-endian bitfield, indicating all the electrical system bus indices (zero-based) that this device gets power from.
+The lighting channel is the zero-based index for the instrument lighting rheostats that control the screen’s brightness.  (Cockpit device lighting is not subject to ATTR_lit_level.)
+Auto-adjust is 1 if the screen brightness increases to be readable during the day, and 0 if screen brightness is “washed out” by the sun.
+The rest of the state commands affect the above published state.
+
+ATTR_hud_glass
+Mesh becomes the HUD glass. Fully compatible with all cockpit panel modes.
+
+ATTR_hud_reset
+ATTR_hud_glass is turned off.
+
+ATTR_light_level <v1> <v2> <dataref> [<brightness>]
+[New in 930:] ATTR_light_level changes the brightness of the _LIT texture for the object. The dataref is interpreted as a value between v1 and v2. Values outside v1 and v2 are clamped. This attribute overrides the sim’s decision about object lighting. If brightness (nts) is given, photometric features are enabled. It is the maximum brightness of your LIT texture.
+
+ATTR_light_level_reset
+[New in 930:] ATTR_light_level_reset resets the _LIT texture to the default brightness. (This brightness is typically full at night or none during the day.)
+
+ATTR_shadow_blend <ratio>
+[New in 1000:] This command temporarily sets blending mode to testing for shadows but blending for primary drawing, with the ratio (0-1) being the cutoff level for shadows.
+
+ATTR_draped
+[New to 1000:] This marks the beginning of draped geometry.  Draped geometry is effectively excluded from the OBJ.
+
+ATTR_no_draped
+[New to 1000:] This marks the end of draped geometry.  Draped geometry is effectively excluded from the OBJ.
+
+ATTR_shadow
+
+ATTR_no_shadow
+
+[New to 1010:] This turns shadow casting off for a range of triangles within any object.
+
+ATTR_hard
+
+Makes TRIS collidable. This can only be used in .objs placed with a .dsf, not made with plugins.
+
+ATTR_no_hard
+
+Resets ATTR_hard or ATTR_hard_deck
+
+ATTR_hard_deck
+
+[New in 900:] Starting in X-Plane 9, ATTR_hard_deck can be used instead of ATTR_hard. It sets a hard surface, but allows the user to fly under the surface (for example the deck of a bridge). This is also limited to .objs placed with a .dsf.
+
+Command                 State Catagory           New Value
+ATTR_hard               Hard Polygon            On
+ATTR_no_hard            Hard Polygon            Non-Off*
+
+ATTR_shade_flat**       Shading                 Flat
+ATTR_shade_smooth**     Shading                 Smooth*
+
+ATTR_no_depth           Depth Check             Off
+ATTR_depth**            Depth Check             On*
+
+ATTR_no_cull**          Two-Sided Geometry      Two-sided
+ATTR_cull**             Two-Sided Geometry      One-sided*
+
+ATTR_no_blend           Blending                Off
+ATTR_blend              Blending                On*
+
+[new in 1000]
+ATTR_shadow_blend       Blending                Shadow-only
+
+[new in 1010]
+ATTR_shadow             Shadow Casting          Shadow Casting*
+ATTR_no_shadow          Shadow Casting          No Shadow Casting
+
+[new in 930]
+ATTR_solid_camera       Camera plane            Enable
+ATTR_no_solid_camera    Camera plane            Disable*
+ATTR_draw_enable        Draw plane              Enable*
+ATTR_draw_disable       Draw plane              Disable
+
+This is the default
+** These are deprecated
+[New in 850:] Starting in X-Plane 8.50 ATTR_no_blend can take an optional decimal ratio (between 0.0 and 1.0) that specifies the cutoff for the alpha channel. Alpha levels below this level are rendered as fully transparent and alpha levels above this level are fully opaque. If this fraction is not specified, no_blend uses a default cutoff ratio of 0.5.
+
+[New in 850:] Starting in X-Plane 8.50 ATTR_hard can be followed by an additional surface name. This surface name controls the bumpiness of the hard polygon, allowing an object to emulate some of the natural X-Plane surfaces, like grass and rocks. If no surface type is specified then a smooth surface is used.
+
+The valid recognized surface names are:
+
+water, concrete, asphalt, grass, dirt, gravel, lakebed, snow, shoulder, blastpad
+
+ANIMATION COMMANDS
+ANIM_begin
+This command marks the beginning of an animation subsection. All further geometry commands are affected by the animation commands between this ANIM_begin and the command until an ANIM_end is encountered.
+
+ANIM_end
+This defines the end of an animation section. Geometry following this is not affected by the animation commands.
+
+ANIM_rotate <x> <y> <z> <r1> <r2> <v1> <v2> [dataref]
+This defines a rotation command. X, Y and Z define an axis of rotation – they should form a unit-length vector. r1 and r2 represent the angle of counterclockwise rotation when the dataref is at its minimum and maximum values respectively, when looking down at the ‘arrow’ of the vector. (So if the vector is 0,1,0 then a positive rotation is counterclockwise when viewed from above.). They are in degrees. v1 and v2 are the minimum and maximum dataref values for calibration purposes. Dataref (optional) is the string name of a sim dataref.
+
+ANIM_trans <x1> <y1> <z1> <x2> <y2> <z2> <v1> <v2> [dataref]
+This defines a translation command. x,y,z 1 and 2 are two offset distances, for when the dataref is at its minimum and maximum values; v1 and v2 are the expected min and max for the dataref and dataref is the string name of the dataref.
+
+ANIM_hide <v1> <v2> <dataref>
+[New in 850:] If the dataref’s value is within the two values (inclusively) then drawing is suspended. Drawing is resumed when a show command restarts drawing or when the animation group (defined by ANIM_begin/ANIM_end ends).
+
+Note: hiding animation suspends all triangle/polygon, line and light drawing but does not stop the processing of attributes. State will change even after a hide commands. Thus the state of any given part of the object does not depend on animation commands.
+
+ANIM_show <v1> <v2> <dataref>
+[New in 850:] If the dataref’s value is within the two values (inclusively) then drawing is resumed. This has no effect unless drawing was previously suspended.
+
+Shows and hides are not counted, e.g. if you hide twice and show once, drawing is resumed.
+
+ANIM_rotate_begin <x> <y> <z> <dataref>
+[New in 900:] This begins an ANIM_rotate command, but with a key frame table to follow. XYZ is the axis of rotation.
+
+ANIM_rotate_key <value> <angle>
+New in 900:] This adds a key frame to a rotation animation. The value represents a possible dataref value–the angle is the corresponding rotation.
+
+ANIM_rotate_end
+[New in 900:] This ends a rotation animation with key frames. It is required after the key frames and must be used to balance every ANIM_rotate_begin.
+
+ANIM_trans_begin <dataref>
+[New in 900:] This begins an ANIM_trans command but with a key frame table that follows. The dataref is specified, but the actual translates are per-keyframe.
+
+ANIM_trans_key <value> <x> <y> <z>
+[New in 900:] This adds a key frame to a translation animation. For the given value, three distances, in X, Y and Z are provided – these are distances to translate the contained geometry.
+
+ANIM_trans_end
+[New in 900:] This ends a key-framed translation animation and must be used to balance any ANIM_trans_begin commands.
+
+ANIM_keyframe_loop <loop>
+[New in 900:] Normally the dataref value for an animation is looke up in the key frame table and an animation is intepretted or extrapolated. If the ANIM_keyframe_loop command is present, the corresponding animation (the animation defined right before the ANIM_keyframe_loop command) will have its dataref divided by the loop amount and the remainder is used. This makes it possible to change an ever-increasing dataref into a looping dataref.
+
+MANIPULATION COMMANDS
+All manipulations except for ATTR_manip_none take a cursor manipulation (defining which cursor to show while the user’s mouse is over the mesh) and a tool tip (shown if the user has help-tips enabled and the cursor hovers over the mesh). The help tip string can be any string without newlines; the cursor enumeration is one of the following names:
+
+four_arrows
+hand
+button
+rotate_small
+rotate_small_left
+rotate_small_right
+rotate_medium
+rotate_medium_left
+rotate_medium_right
+rotate_large
+rotate_large_left
+rotate_large_right
+up_down
+down
+up
+left_right
+right
+left
+arrow
+
+ATTR_manip_none
+[New in 920:] This sets the current manipulation to no manipulation – clicks to the geometry will track through to any mesh behind this one.
+
+Note: click-testing the mesh burns CPU on a per-triangle basis; click-testing very complex meshes can be quite slow. By putting an ATTR_manip_none attribute after ATTR_cockpit but before TRIS, you can create triangles that use the cockpit texture but do not have the associated cockpit manipulator. For geometry that does not need click testing (e.g. an EFIS screen with no buttons) this can reduce the number of click-tested triangles and improve through-put.
+
+ATTR_manip_drag_xy <cursor> <dx> <dy> <v1min> <v1max> <v2min> <v2max> <dref1> <dref2> <tooltip>
+[New in 920:] This sets the current manipulation to an X-Y axis manpulation. The parameters v1min and v1max define the minimum and maximum values to be written to the first dataref as the mouse is dragged along the X axis. The parameters v2min and v2max define the minimum and maximum values to be written to the second dataref as the mouse is dragged along the Y axis. Two dataref names and a tool tip follow.
+
+When an axis drag begins, the position of the axis on screen is based on the current dataref value. For example, if the X dataref has minimum and maximum values of 0 and 4 and is currently set to 1, then when the click starts, 25% of the axis will be to the left of the current mouse position and 75% will be to the right. If the dx axis length is 200 then the user can drag 50 pixels to the left and 150 pixels to the right to manipulate the dataref.
+
+ATTR_manip_drag_axis <cursor> <dx> <dy> <dz> <v1> <v2> <dataref> <tooltip>
+[New in 920:] This sets the current manipulation to an axis in 3-d space. dx, dy, and dz describe an axis (the length is in meters). v1 and v2 define the range that the dataref can take. Like the above xy drag, the axis’ relative position is determined by the current dataref value. The axix’s orientation is affected by animations, but is “frozen” on mouse-down.
+
+ATTR_manip_command <cursor> <command> <tooltip>
+[New in 920:] This sets the current manpiulation to a comand, specified by the command parameter. The command will be actuated while the mouse is held down over the mesh.
+
+ATTR_manip_command_axis <cursor> <dx> <dy> <dz> <positive command> <negative command> <tooltip>
+[New in 920:] This sets the current manipulation to an axis drag where dragging in the direction of the vector invokes the positive command and dragging in the negative direction invokes the negative command. The command is invoked until the mouse is released or returns to the neutral or opposite position. Axis definition is the same as in ATTR_manip_drag_axis.
+
+ATTR_manip_noop
+[New in 920:] This sets the current manipulation to “no-op” (no operation). Unlike “none”, the mouse click is “swallowed” by the triangles and will not actuate clicks on a mesh behind the no-op mesh.
+
+ATTR_manip_push <cursor> <v_down> <v_up> <dref> <tooltip>
+[New in 930:] This sets the current manipulation to be a “push” button. When the mouse is clicked, this manipulator sets the dataref to the “down” value; when the mouse is released, the dataref is reset to the “up” value. The intention is to model push buttons.
+
+ATTR_manip_radio <cursor> <v_down> <dref> <tooltip>
+[New in 930:] This sets the current manipulator to be a “radio” button. Whe nthe mouse is clicked, the dataref is set to the down value. By setting different meshes to have radio manipulators with the same dataref but different values, you can create radio-button-like behavior.
+
+ATTR_manip_toggle <cursor> <v_on> <v_off> <dref> <tooltip>
+[New in 930:] This sets the current manipulator to a “toggle” dataref. When the mouse is clicked down, if the dataref is already at the “on” value, it is set to the “off” value – otherwise it is set to the “on” value. This can be used to make toggle switches like a gear handle.
+
+ATTR_manip_delta <cursor> <v_down> <v_hold> <v_min> <v_max> <dref> <tooltip>
+[New in 930:] This sets the current manipulator to a “delta” manipulator. When the mouse is first clicked, the dataref is incremented by the “down” value. if the mouse is held it is further incremented by the “hold” value (for every seocnd the mouse is held down). The dataref will be clamped between the minimum and maximum value. To decrement, use negative values.
+
+The intention of the delta manipulator is to build multiple “hot spots” with invisible meshes, one to increment, one to decrement.
+
+ATTR_manip_wrap <cursor> <v_down> <v_hold> <v_min> <v_max> <dref> <tooltip>
+[New in 930:] This sets the manipulator to the “wrap” manipulator. The wrap manipulator functions the same as the delta manipulator, except if the dataref exceeds the range min to max, the dataref will wrap around to the other side of the range. This can be use for a control like an OBS knob.
+
+ATTR_manip_drag_axis_pix <cursor> <dx_pix> <step> <exp> <v1> <v2> <dataref> <tooltip>
+[New in 1010:] This sets the current manipulator to a drag axis that can be either horizontal or vertical – the user chooses.  Up and right drags increase.  The length of the axis is defined in screen pixels by dx_pix.  The dataref is always modified in increments of “step” if it is not zero.  “exp” is the power of an exponential curve that controls the speed at which the dataref changes.  Higher numbers cause a more “non-linear” response, where small drags are very precise and large drags are very fast.  An exponent of 1.0 sets linear response, similar to the other manipulators.
+
+ATTR_manip_wheel <delta>
+[New in 1050:] This can be used after any manipulator that uses a single dataref that does not automatically support the mouse wheel; it adds a mouse wheel action to the manipulator such that each click of the mouse wheel moves the dataref by <delta> units.
+
+ATTR_manip_command_knob <cursor> <positive cmd> <negative cmd> <tool tip>
+ATTR_manip_command_switch_up_down <cursor> <positive cmd> <negative cmd> <tool tip>
+ATTR_manip_command_switch_left_right <cursor> <positive cmd> <negative cmd> <tool tip>
+[New in 1050:] These manipulators add a switch or knob manipulator that executes a command when the switch or knob is moved. The UI gesture the user uses will be appropriate for the type of switch/knob and is selected by X-Plane; use the knob variant for rotating knobs, and the up/down or left/right variant for switches whose main motion is vertical or horizontal.
+
+Two commands are provided, one for increasing the switch position (e.g. switch rotates clockwise, switch moves up, etc.) and one for decreasing the switch position.
+
+The cursor selected should be one of the two-way cursors (e.g. rotate_small); when X-Plane provides two click zones for the manipulator automatically, it will use the right one-way cursor (e.g. rotate_small_left or rotate_small_right automatically).
+
+Mouse wheel support for command knob/switch manipulators is automatic – each single click of the mouse wheel runs the increase or decrease command once.
+
+ATTR_manip_axis_knob <cursor> <min> <max> <click delta> <hold delta> <dataref> <tooltip>
+ATTR_manip_axis_switch_up_down <cursor> <min> <max> <click delta> <hold delta> <dataref> <tooltip>
+ATTR_manip_axis_switch_left_right <cursor> <min> <max> <click delta> <hold delta> <dataref> <tooltip>
+These manipulators work the same as the above command manipulators – a gesture matching a knob, left/right or up/down switch is created. These manipulators are dataref-driven – you provide minimum and maximum values and a dataref to be changed.
+
+Click delta is the amount the manipulator changes when the user moves the manipulator a single unit.  Hold delta is the number of units-per-second if the user does a continuous hold on the manipulator. If the mouse wheel is clicked once, the click delta is used.
+
+Like the command knob/switch manipulators, the cursor is automatically changed to indicate whether an increment or decrement will be used.
+
+ATTR_manip_keyframe <dataref value> <angle>
+[New in 1100:] ATTR_manip_keyframe can be used to add intermediate key-frame points to a rotational manipulator; the end points of the key frame table are taken from angle1, angle2, and v1min/v1max of the main manipulator; intermediate points can be added in between . Dataref value is in units of dataref 1 and angle is in degrees.
+
+ATTR_manip_command_switch_left_right2 <cursor> <command> <tooltip>
+ATTR_manip_command_switch_up_down2 <cursor> <command> <tooltip>
+ATTR_manip_command_knob2 <cursor> <command> <tooltip>
+[New in 1110:] These commands create a two-way switch based on a single toggle-command.  They will press the command once each time they are clicked with the mouse, but they are  support up/down left/right and rotate hand gesture in VR.
+
+ATTR_axis_detented <dx> <dy> <dz> <v_min> <v_max> <dataref>
+[New in 1110:] ATTR_axis_detented can follow ATTR_manip_drag_axis and adds a second direction of dragging for detenting.  dx, dy, and dz define the direction to drag to overcome detents; the dataref will go from vmin to vmax as it is dragged to the full length of dx, dy, dz.
+
+ATTR_axis_detent_range <start> <end> <height>
+[New in 1110:] specifies a detent region in a detented-axis manipulator.  Start and end are values that the main axis dataref goes through (start must be smaller than end); height is in units of the second dataref and specifies how high the user must drag to the side to enter this range.
+
+You may use more than one ATTR_axis_detent_range to create complex detent patterns.  You can include zero-length detents that are  lower  than their neighbors to create “stop pits’, but do not create zero length detents that are higher than their neighbors; they will not stop a drag.
+
+ATTR_manip_drag_rotate <cursor> <x> <y> <z> <dx> <dy> <dz> <angle1> <angle2> <lift> <v1min> <v1max> <v2min> <v2max> <dataref1> <dataref2> <tooltip>
+[New in 1110:] This creates a rotational manipulator.
+
+<x> <y> <z> – The rotation origin point
+<dx> <dy> <dz> – The axis of rotation
+<angle1> <angle2> – The manipulator rotates around an axis that goes through the point X,Y,Z and has a direction dx,dy,dz.  The angle range (in degrees) from angle1 to angle2 is treated as counter-clockwise when dx,dy,dz points to the viewer — this is the same convention as rotation animations use.  Dataref1 is affected by rotating the manipulator.
+The rotation manipulator can optionally be made to pull out from the rotation point to go over detents.  In this case, dataref2 (and v2 min/max) define the movement of this dataref; the manipulator is lifted “lift” meters when the dataref is at v2 – the lift is always away from the center of rotation.  If detenting is not desired, set v2 min/max and lift to 0, and use “None” for dataref2.
+
+Like the drag axis manipulator, you can follow ATTR_manip_drag_rotate with ATTR_axis_detent_range to specify detent regions of the rotational manipulator.
+
+ATTR_manip_device <cursor> <device> <tooltip>
+[New in 12.1.0] This creates a touch screen manipulator for a cockpit device.
+
+<name> – The name of the avionics device. This can be any of X-Plane’s own devices (Garmin, Airbus, Primus, etc.) or a device created by a plugin using the XPLMCreateAvionics API.
+The manipulator must be the same shape, and UV-mapped the same way as the screen of the cockpit device for coordinates to be passed to the simulator and plugins correctly.
+
+The manipulator must also be tagged with ATTR_cockpit_device for X-Plane to recognise it correctly.
