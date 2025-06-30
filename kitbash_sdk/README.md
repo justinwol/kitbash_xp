@@ -1,255 +1,248 @@
-# KITBASH SDK
+# Kitbash SDK
 
-A C++ library and command-line tool for merging X-Plane OBJ8 files.
-
-## Overview
-
-KITBASH merges two X-Plane OBJ8 files by combining vertices, indices, and animations from an addition file into a base file. It automatically adjusts vertex and triangle indices to maintain proper references.
+A C++ library for merging X-Plane 12 OBJ8 3D model files. This SDK allows developers to programmatically combine multiple OBJ8 files into a single merged file, perfect for kitbashing workflows in X-Plane aircraft and scenery development.
 
 ## Features
 
-- Merges X-Plane OBJ8 files safely with automatic backups
-- Adjusts vertex and triangle indices automatically
-- Provides detailed merge statistics
-- Both C and C++ library interfaces plus command-line tool
-- User confirmation before overwriting files
+- **OBJ8 File Merging**: Combine multiple X-Plane OBJ8 files into one
+- **Statistics Tracking**: Get detailed information about vertex counts, triangle counts, and processing metrics
+- **Dual API**: Both C-style and C++ wrapper functions available
+- **Error Handling**: Comprehensive error reporting
+- **Backup Creation**: Automatic backup of original files before modification
 
-## SDK Contents
+## Contents
 
-This SDK contains everything you need to integrate KITBASH into your C++ project:
+```
+kitbash_sdk/
+├── kitbash.h           # Header file with complete API
+├── kitbash_core.lib    # Windows static library
+├── LICENSE             # GPL v3 license
+└── README.md           # This file
+```
 
-- **`kitbash.h`** - Header file with API declarations
-- **`kitbash_core.lib`** - Pre-compiled static library (Windows)
-- **`CMakeLists.txt`** - CMake integration file
-- **`LICENSE`** - GPL v3 license
-- **`README.md`** - This documentation
+## Requirements
 
-## Quick Start
+- **Platform**: Windows (x64)
+- **Compiler**: Visual Studio 2019+ or compatible C++ compiler
+- **Standard**: C++11 or later
+
+## Integration
 
 ### 1. Copy SDK to Your Project
 
-Copy the entire `kitbash_sdk` directory into your C++ project.
+Copy the entire `kitbash_sdk` directory into your project folder.
 
-### 2. Add to CMakeLists.txt
+### 2. Configure Include Path
 
-```cmake
-# Add kitbash subdirectory
-add_subdirectory(kitbash_sdk)
+Add the SDK directory to your compiler's include path:
 
-# Link to your target
-target_link_libraries(your_target kitbash_core)
+**Visual Studio:**
+- Right-click project → Properties
+- C/C++ → General → Additional Include Directories
+- Add: `$(ProjectDir)kitbash_sdk`
+
+**Command Line:**
+```bash
+g++ -I./kitbash_sdk your_source.cpp
 ```
 
-### 3. Include Header
+### 3. Link the Library
+
+**Visual Studio:**
+- Right-click project → Properties
+- Linker → General → Additional Library Directories
+- Add: `$(ProjectDir)kitbash_sdk`
+- Linker → Input → Additional Dependencies
+- Add: `kitbash_core.lib`
+
+**Command Line:**
+```bash
+g++ -L./kitbash_sdk -lkitbash_core your_source.cpp
+```
+
+### 4. Include the Header
 
 ```cpp
-#include "kitbash_sdk/kitbash.h"
+#include "kitbash.h"
 ```
 
-### 4. Build and Run
+## Usage Examples
 
-```bash
-mkdir build
-cd build
-cmake ..
-cmake --build .
+### Basic C++ API
+
+```cpp
+#include "kitbash.h"
+#include <iostream>
+
+int main() {
+    // Simple merge operation
+    bool success = kitbash::merge("base_model.obj", "addition_model.obj");
+    
+    if (success) {
+        std::cout << "Merge completed successfully!" << std::endl;
+    } else {
+        std::cout << "Merge failed" << std::endl;
+    }
+    
+    return 0;
+}
 ```
 
-## Integration Methods
+### Advanced Usage with Statistics
 
-### Method 1: CMake Integration (Recommended)
+```cpp
+#include "kitbash.h"
+#include <iostream>
 
-Add to your `CMakeLists.txt`:
-```cmake
-add_subdirectory(kitbash_sdk)
-target_link_libraries(your_app kitbash_core)
+int main() {
+    MergeStats stats;
+    
+    // Merge with detailed statistics
+    bool success = kitbash::merge_with_stats(
+        "base_model.obj", 
+        "addition_model.obj", 
+        &stats
+    );
+    
+    if (success) {
+        std::cout << "Original vertices: " << stats.original_vt_count << std::endl;
+        std::cout << "Added vertices: " << stats.added_vt_count << std::endl;
+        std::cout << "Final vertices: " << stats.final_vt_count << std::endl;
+        std::cout << "Vertex increase: " << stats.vt_increase_percent() << "%" << std::endl;
+        std::cout << "Processing time: " << stats.processing_time << "s" << std::endl;
+    }
+    
+    return 0;
+}
 ```
 
-### Method 2: Manual Linking
-
-```bash
-# Compile your application
-g++ -std=c++17 -I./kitbash_sdk your_app.cpp ./kitbash_sdk/kitbash_core.lib -o your_app
-```
-
-### Method 3: Visual Studio
-
-1. Add `kitbash_sdk` folder to your project
-2. In Project Properties:
-   - Add `kitbash_sdk` to Include Directories
-   - Add `kitbash_sdk/kitbash_core.lib` to Additional Dependencies
-3. Set C++ Standard to C++17 or later
-
-## Usage
-
-### C++ API
+### Custom Output File
 
 ```cpp
 #include "kitbash.h"
 
-// Simple merge
-if (!kitbash::merge("base.obj", "addition.obj")) {
-    // Handle error
-}
-
-// Merge to new file
-kitbash::merge_to_file("base.obj", "addition.obj", "output.obj");
-
-// Get file statistics
-auto stats = kitbash::get_stats("model.obj");
-std::cout << "Vertices: " << stats.vt_count << std::endl;
-
-// Advanced merge with statistics
-MergeStats merge_stats;
-if (kitbash::merge_with_stats("base.obj", "addition.obj", &merge_stats)) {
-    std::cout << "Added " << merge_stats.added_vt_count << " vertices" << std::endl;
+int main() {
+    // Merge to a specific output file
+    bool success = kitbash::merge_to_file(
+        "base_model.obj",
+        "addition_model.obj", 
+        "merged_output.obj"
+    );
+    
+    return success ? 0 : 1;
 }
 ```
 
-### C API
+### C-Style API
 
-```c
+```cpp
 #include "kitbash.h"
+#include <iostream>
 
-// Simple merge
-int result = kitbash_merge("base.obj", "addition.obj");
-if (result != 0) {
-    printf("Error: %s\n", kitbash_get_last_error());
+int main() {
+    // Using C-style functions
+    int result = kitbash_merge("base_model.obj", "addition_model.obj");
+    
+    if (result != 0) {
+        const char* error = kitbash_get_last_error();
+        std::cout << "Error: " << error << std::endl;
+    }
+    
+    return result;
 }
+```
 
-// Merge to new file
-kitbash_merge_to_file("base.obj", "addition.obj", "output.obj");
+### Getting File Statistics
 
-// Get statistics
-int vt_count, tris_count;
-if (kitbash_get_stats("model.obj", &vt_count, &tris_count) == 0) {
-    printf("Vertices: %d, Triangles: %d\n", vt_count, tris_count);
+```cpp
+#include "kitbash.h"
+#include <iostream>
+
+int main() {
+    // Get statistics about an OBJ8 file
+    auto stats = kitbash::get_stats("model.obj");
+    
+    std::cout << "Vertices: " << stats.vt_count << std::endl;
+    std::cout << "Triangles: " << stats.tris_count << std::endl;
+    std::cout << "Lines: " << stats.line_count << std::endl;
+    
+    return 0;
 }
 ```
 
 ## API Reference
 
-### C++ Namespace: `kitbash`
+### C++ Namespace Functions
 
-#### Functions
+#### Core Merge Functions
+- `bool kitbash::merge(const std::string& base, const std::string& addition)`
+- `bool kitbash::merge_to_file(const std::string& base, const std::string& addition, const std::string& output)`
 
-- `bool merge(const std::string& base, const std::string& addition)`
-  - Merges addition file into base file (modifies base file)
-  - Returns true on success
+#### Advanced Merge with Statistics
+- `bool kitbash::merge_with_stats(const std::string& base, const std::string& addition, MergeStats* stats = nullptr)`
+- `bool kitbash::merge_to_file_with_stats(const std::string& base, const std::string& addition, const std::string& output, MergeStats* stats = nullptr)`
 
-- `bool merge_to_file(const std::string& base, const std::string& addition, const std::string& output)`
-  - Merges files and saves to output file (preserves originals)
-  - Returns true on success
+#### File Operations
+- `kitbash::Stats kitbash::get_stats(const std::string& obj_file)`
+- `std::vector<std::string> kitbash::read_file(const std::string& filename)`
+- `void kitbash::write_file(const std::string& filename, const std::vector<std::string>& lines)`
+- `bool kitbash::create_backup(const std::string& filename)`
 
-- `Stats get_stats(const std::string& obj_file)`
-  - Returns file statistics (vertex count, triangle count, line count)
+#### Utility Functions
+- `bool kitbash::is_obj_file(const std::string& filename)`
+- `bool kitbash::validate_obj_format(const std::vector<std::string>& lines)`
 
-- `bool merge_with_stats(const std::string& base, const std::string& addition, MergeStats* stats = nullptr)`
-  - Advanced merge with detailed statistics
-  - Returns true on success
-
-#### Data Structures
-
-```cpp
-struct Stats {
-    int vt_count = 0;      // Vertex count
-    int tris_count = 0;    // Triangle count
-    int line_count = 0;    // Total lines
-};
-
-struct MergeStats {
-    int original_vt_count = 0;
-    int original_tris_count = 0;
-    int added_vt_count = 0;
-    int added_tris_count = 0;
-    int final_vt_count = 0;
-    int final_tris_count = 0;
-    double processing_time = 0.0;
-    std::string base_filename;
-    std::string addition_filename;
-    std::string output_filename;
-    std::string backup_filename;
-    
-    // Helper methods
-    double vt_increase_percent() const;
-    double tris_increase_percent() const;
-    double line_increase_percent() const;
-};
-```
-
-### C API Functions
+### C-Style Functions
 
 - `int kitbash_merge(const char* base_file, const char* addition_file)`
-  - Returns 0 on success, -1 on error
-
 - `int kitbash_merge_to_file(const char* base_file, const char* addition_file, const char* output_file)`
-  - Returns 0 on success, -1 on error
-
 - `int kitbash_get_stats(const char* obj_file, int* vt_count, int* tris_count)`
-  - Returns 0 on success, -1 on error
-
 - `const char* kitbash_get_last_error()`
-  - Returns last error message
 
-## Requirements
+### Data Structures
 
-- C++17 or later
-- CMake 3.10+ (for CMake builds)
-- Standard C++ library with filesystem support
+#### MergeStats
+Contains detailed information about merge operations:
+- Vertex counts (original, added, final)
+- Triangle counts (original, added, final)
+- Line counts and processing time
+- File names and calculated percentages
 
-## Safety Features
+#### kitbash::Stats
+Simple statistics structure for C++ API:
+- `int vt_count` - Vertex count
+- `int tris_count` - Triangle count  
+- `int line_count` - Total line count
 
-- Automatic backup creation when overwriting files
-- User confirmation required before modifications
-- File validation and error checking
-- Clean output with no kitbash traces
+## Error Handling
+
+The library provides comprehensive error handling:
+
+**C++ API**: Returns `bool` values indicating success/failure
+**C API**: Returns integer error codes (0 = success, non-zero = error)
+
+Use `kitbash_get_last_error()` to get detailed error messages.
+
+## File Format Support
+
+- **Input**: X-Plane 12 OBJ8 files (.obj)
+- **Output**: X-Plane 12 OBJ8 files (.obj)
+- **Automatic backup**: Creates `.bak` files before modifying originals
 
 ## License
 
-GPL v3 - See LICENSE file for details.
+This SDK is licensed under the GNU General Public License v3.0. See the `LICENSE` file for complete terms.
 
-## Integration Examples
+When using this SDK in your projects, you must comply with GPL v3 requirements, including:
+- Making your source code available if you distribute your application
+- Including the GPL license notice
+- Indicating any changes made to the library
 
-### With Existing CMake Project
+## Support
 
-```cmake
-# In your CMakeLists.txt
-add_subdirectory(kitbash_sdk)
-target_link_libraries(your_app kitbash_core)
-```
+For issues, questions, or contributions, please refer to the main project repository.
 
-### With Visual Studio
+## Version
 
-1. Add all `.cpp` and `.h` files to your project
-2. Set C++ standard to C++17 or later
-3. Include `kitbash.h` in your source files
-
-### With Code::Blocks or Dev-C++
-
-1. Add `kitbash.cpp` and `kitbash.h` to your project
-2. Set compiler to C++17 mode
-3. Include `kitbash.h` in your source files
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Compilation errors**: Ensure C++17 support is enabled
-2. **Linking errors**: Make sure to link the kitbash library
-3. **Runtime errors**: Check file paths and permissions
-4. **Invalid OBJ format**: Ensure files are valid X-Plane OBJ8 format
-
-### Error Handling
-
-Always check return values and use error functions:
-
-```cpp
-// C++ API
-if (!kitbash::merge("base.obj", "addition.obj")) {
-    std::cerr << "Merge failed" << std::endl;
-}
-
-// C API
-if (kitbash_merge("base.obj", "addition.obj") != 0) {
-    printf("Error: %s\n", kitbash_get_last_error());
-}
+SDK Version: 1.0.0
+Compatible with: Kitbash Core Library
