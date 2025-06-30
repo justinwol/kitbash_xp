@@ -11,7 +11,7 @@ KITBASH merges two X-Plane OBJ8 files by combining vertices, indices, and animat
 - Merges X-Plane OBJ8 files safely with automatic backups
 - Adjusts vertex and triangle indices automatically
 - Provides detailed merge statistics
-- Both library and command-line interfaces
+- Both C and C++ library interfaces plus command-line tool
 - User confirmation before overwriting files
 
 ## Building
@@ -42,6 +42,8 @@ make
 ```
 
 ### Library Usage
+
+#### C++ API
 ```cpp
 #include "kitbash.h"
 
@@ -52,6 +54,20 @@ if (!kitbash::merge("base.obj", "addition.obj")) {
 
 // Merge to new file
 kitbash::merge_to_file("base.obj", "addition.obj", "output.obj");
+```
+
+#### C API
+```c
+#include "kitbash.h"
+
+// Simple merge
+int result = kitbash_merge("base.obj", "addition.obj");
+if (result != 0) {
+    printf("Error: %s\n", kitbash_get_last_error());
+}
+
+// Merge to new file
+kitbash_merge_to_file("base.obj", "addition.obj", "output.obj");
 ```
 
 ## Safety Features
