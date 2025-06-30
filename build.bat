@@ -63,9 +63,9 @@ if errorlevel 1 (
 echo.
 echo Build complete!
 if "%BUILD_TYPE%"=="Debug" (
-    echo Executable: build\Debug\kitbash.exe
+    echo Executable: build\src\Debug\kitbash.exe
 ) else (
-    echo Executable: build\Release\kitbash.exe
+    echo Executable: build\src\Release\kitbash.exe
 )
 echo.
 echo Usage examples:
