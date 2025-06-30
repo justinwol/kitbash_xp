@@ -3,6 +3,8 @@ build/
 cmake-build-*/
 **/build/
 out/
+kitbash_cli/
+kitbash_sdk/
 
 # Compiled binaries
 kitbash
