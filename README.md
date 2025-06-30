@@ -1,6 +1,6 @@
 # KITBASH
 
-A C++ command-line tool for merging X-Plane OBJ8 files.
+A C++ library and command-line tool for merging X-Plane OBJ8 files.
 
 ## Overview
 
