@@ -1,14 +1,22 @@
 # Build directories
 build/
 cmake-build-*/
+**/build/
+out/
 
 # Compiled binaries
 kitbash
 kitbash.exe
+kitbash.lua
+*.exe
+*.out
 
-# Object files
+# Object files (compiled, not X-Plane OBJ8 models)
 *.o
-*.obj
+# Only ignore .obj files in build directories, not model files
+build/**/*.obj
+**/build/**/*.obj
+src/**/*.obj
 
 # Static libraries
 *.a
@@ -24,12 +32,37 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
+**/CMakeFiles/
+**/cmake_install.cmake
+**/CMakeCache.txt
+
+# Visual Studio files
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+x64/
+x86/
+Debug/
+Release/
+*.tlog
+*.recipe
+*.lastbuildstate
+*.idb
+*.pdb
+*.ilk
 
 # IDE files
 .vscode/
-.vs/
-*.vcxproj*
-*.sln
+.idea/
+*.swp
+*.swo
+*~
 
 # Backup files (created by kitbash itself)
 *.bak
@@ -37,3 +70,47 @@ Makefile
 # OS files
 .DS_Store
 Thumbs.db
+*.tmp
+*.temp
+
+# Compiler-specific
+*.gch
+*.pch
+
+# Archives
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# Runtime generated files
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
