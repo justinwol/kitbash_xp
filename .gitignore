@@ -3,14 +3,16 @@ build/
 cmake-build-*/
 **/build/
 out/
-kitbash_cli/
-kitbash_sdk/
 
-# Compiled binaries
-kitbash
-kitbash.exe
+# Distribution packages
+dist/
+
+# Compiled binaries in distribution directories
+kitbash_cli/kitbash.exe
+kitbash_sdk/kitbash_core.lib
+
+# Other compiled binaries
 kitbash.lua
-*.exe
 *.out
 
 # Object files (compiled, not X-Plane OBJ8 models)
@@ -22,7 +24,6 @@ src/**/*.obj
 
 # Static libraries
 *.a
-*.lib
 
 # Shared libraries
 *.so

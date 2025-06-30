@@ -243,13 +243,46 @@ The toolkit provides comprehensive error handling for common scenarios:
 - **Backup failures**: Disk space and permission validation
 - **User cancellation**: Graceful handling of user abort operations
 
+## Development Workflow
+
+### Building and Packaging
+```bash
+# Build the project
+build.bat
+
+# Package for release (creates ZIP files in dist/)
+package.bat 0.1.0
+```
+
+### Release Process
+1. **Build**: Run `build.bat` to compile the project
+2. **Package**: Run `package.bat [version]` to create distribution packages
+3. **Test**: Extract and test the packages locally
+4. **Tag**: Create git tag: `git tag -a v0.1.0 -m "Release version 0.1.0"`
+5. **Push**: Push tag: `git push origin v0.1.0`
+6. **Release**: Create GitHub release and upload ZIP files from `dist/` directory
+
+### Project Structure for Development
+```
+kitbash_xp/
+├── src/                    # Source code
+├── kitbash_cli/           # CLI distribution template (tracked)
+├── kitbash_sdk/           # SDK distribution template (tracked)
+├── build/                 # Build outputs (ignored)
+├── dist/                  # Release packages (ignored)
+├── build.bat              # Build script
+└── package.bat            # Packaging script
+```
+
+**Note**: The `kitbash_cli/` and `kitbash_sdk/` directories serve as distribution templates. The actual binaries (`.exe`, `.lib`) are ignored by git and copied from the build directory during packaging.
+
 ## Version History
 
-- **v1.0.0** (2025): Initial release with CLI tool and SDK
+- **v0.1.0** (In Development): Initial working release
   - Complete OBJ8 merge functionality
   - Automatic backup creation
   - Detailed statistics reporting
-  - Cross-platform source code
+  - CLI tool and SDK distributions
   - Professional error handling
 
 ## License
